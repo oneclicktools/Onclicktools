@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Rotator & Flipper</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .image-container {
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        .btn {
+            transition: all 0.2s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn:active {
+            transform: translateY(0);
+        }
+        .control-btn {
+            width: 60px;
+            height: 60px;
+        }
+        @media (max-width: 640px) {
+            .control-btn {
+                width: 50px;
+                height: 50px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen py-8 px-4">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-bold text-indigo-800 mb-2">Image Rotator & Flipper</h1>
+            <p class="text-lg text-gray-600">Upload an image or use the sample, then rotate or flip it as needed</p>
+        </header>
+
+        <div class="bg-white rounded-xl shadow-xl p-6 md:p-8">
+            <!-- Image Preview Section -->
+            <div class="mb-8">
+                <div class="image-container mx-auto max-w-md rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center min-h-[300px] mb-6">
+                    <img id="preview-image" src="https://images.unsplash.com/photo-1506744038136-46273834b3fb" alt="Preview" class="max-w-full max-h-[280px] object-contain">
+                </div>
+                
+                <!-- Upload Button -->
+                <div class="text-center mb-6">
+                    <label for="image-upload" class="cursor-pointer inline-flex items-center px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700">
+                        <i class="fas fa-upload mr-2"></i>
+                        Upload Image
+                    </label>
+                    <input id="image-upload" type="file" accept="image/*" class="hidden">
+                </div>
+            </div>
+
+            <!-- Controls Section -->
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4 text-center">Transform Controls</h2>
+                
+                <!-- Rotation Controls -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-medium text-gray-700 mb-3 text-center">Rotation</h3>
+                    <div class="flex justify-center space-x-4 md:space-x-6">
+                        <button id="rotate-left" class="control-btn flex items-center justify-center bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200">
+                            <i class="fas fa-rotate-left text-2xl"></i>
+                        </button>
+                        <button id="rotate-right" class="control-btn flex items-center justify-center bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200">
+                            <i class="fas fa-rotate-right text-2xl"></i>
+                        </button>
+                        <button id="rotate-180" class="control-btn flex items-center justify-center bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200">
+                            <i class="fas fa-rotate text-2xl"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Flipping Controls -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-medium text-gray-700 mb-3 text-center">Flipping</h3>
+                    <div class="flex justify-center space-x-4 md:space-x-6">
+                        <button id="flip-horizontal" class="control-btn flex items-center justify-center bg-purple-100 text-purple-700 rounded-full hover:bg-purple-200">
+                            <i class="fas fa-arrows-alt-h text-2xl"></i>
+                        </button>
+                        <button id="flip-vertical" class="control-btn flex items-center justify-center bg-purple-100 text-purple-700 rounded-full hover:bg-purple-200">
+                            <i class="fas fa-arrows-alt-v text-2xl"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Reset Button -->
+                <div class="text-center">
+                    <button id="reset" class="px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300">
+                        <i class="fas fa-redo mr-2"></i>Reset Image
+                    </button>
+                </div>
+            </div>
+
+            <!-- Status Display -->
+            <div class="text-center p-4 bg-gray-50 rounded-lg">
+                <p class="text-gray-700">Current Rotation: <span id="rotation-value">0</span>°</p>
+                <p class="text-gray-700">Flip Status: <span id="flip-status">None</span></p>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="mt-8 bg-white rounded-xl shadow-md p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">How to Use</h2>
+            <ul class="list-disc list-inside text-gray-600 space-y-2">
+                <li>Upload an image using the upload button or use the default sample image</li>
+                <li>Use the rotation buttons to rotate the image clockwise, counterclockwise, or by 180 degrees</li>
+                <li>Use the flip buttons to flip the image horizontally or vertically</li>
+                <li>Reset the image to its original state at any time</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements
+            const imageUpload = document.getElementById('image-upload');
+            const previewImage = document.getElementById('preview-image');
+            const rotateLeftBtn = document.getElementById('rotate-left');
+            const rotateRightBtn = document.getElementById('rotate-right');
+            const rotate180Btn = document.getElementById('rotate-180');
+            const flipHorizontalBtn = document.getElementById('flip-horizontal');
+            const flipVerticalBtn = document.getElementById('flip-vertical');
+            const resetBtn = document.getElementById('reset');
+            const rotationValue = document.getElementById('rotation-value');
+            const flipStatus = document.getElementById('flip-status');
+            
+            // State
+            let rotation = 0;
+            let scaleX = 1;
+            let scaleY = 1;
+            
+            // Update image transformation
+            function updateTransform() {
+                previewImage.style.transform = `rotate(${rotation}deg) scaleX(${scaleX}) scaleY(${scaleY})`;
+                rotationValue.textContent = rotation;
+                
+                let flipText = 'None';
+                if (scaleX === -1 && scaleY === 1) flipText = 'Horizontal';
+                if (scaleX === 1 && scaleY === -1) flipText = 'Vertical';
+                if (scaleX === -1 && scaleY === -1) flipText = 'Both';
+                flipStatus.textContent = flipText;
+            }
+            
+            // Event listeners
+            imageUpload.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file && file.type.match('image.*')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImage.src = e.target.result;
+                        // Reset transformations on new image
+                        rotation = 0;
+                        scaleX = 1;
+                        scaleY = 1;
+                        updateTransform();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            rotateLeftBtn.addEventListener('click', function() {
+                rotation -= 90;
+                updateTransform();
+            });
+            
+            rotateRightBtn.addEventListener('click', function() {
+                rotation += 90;
+                updateTransform();
+            });
+            
+            rotate180Btn.addEventListener('click', function() {
+                rotation += 180;
+                updateTransform();
+            });
+            
+            flipHorizontalBtn.addEventListener('click', function() {
+                scaleX *= -1;
+                updateTransform();
+            });
+            
+            flipVerticalBtn.addEventListener('click', function() {
+                scaleY *= -1;
+                updateTransform();
+            });
+            
+            resetBtn.addEventListener('click', function() {
+                rotation = 0;
+                scaleX = 1;
+                scaleY = 1;
+                updateTransform();
+            });
+            
+            // Initialize
+            updateTransform();
+        });
+    </script>
+</body>
+</html>

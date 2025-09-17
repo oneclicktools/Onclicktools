@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Cropper</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .crop-container {
+            position: relative;
+            max-width: 100%;
+            height: 400px;
+            background: #f3f4f6;
+            overflow: hidden;
+            cursor: move;
+        }
+        .crop-area {
+            position: absolute;
+            border: 2px dashed #3b82f6;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+        }
+        .crop-handle {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #3b82f6;
+            border-radius: 50%;
+            z-index: 11;
+        }
+        .handle-tl { top: -6px; left: -6px; cursor: nwse-resize; }
+        .handle-tr { top: -6px; right: -6px; cursor: nesw-resize; }
+        .handle-bl { bottom: -6px; left: -6px; cursor: nesw-resize; }
+        .handle-br { bottom: -6px; right: -6px; cursor: nwse-resize; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Image Cropper</h1>
+            <p class="text-gray-600">Upload, crop, and download your images</p>
+        </header>
+
+        <main class="bg-white rounded-lg shadow-md p-6">
+            <!-- Upload Section -->
+            <div id="upload-section" class="mb-8 text-center">
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 cursor-pointer" id="drop-zone">
+                    <input type="file" id="image-upload" accept="image/*" class="hidden">
+                    <div class="flex flex-col items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p class="text-gray-600 mb-2">Drag & drop your image here or click to browse</p>
+                        <p class="text-sm text-gray-500">Supports JPG, PNG, and WebP formats</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Crop Section (Initially Hidden) -->
+            <div id="crop-section" class="hidden">
+                <div class="flex flex-col md:flex-row gap-6">
+                    <!-- Image Preview and Crop Area -->
+                    <div class="flex-1">
+                        <div class="crop-container rounded-lg overflow-hidden" id="crop-container">
+                            <img id="crop-image" class="max-w-full">
+                            <div class="crop-area" id="crop-area">
+                                <div class="crop-handle handle-tl"></div>
+                                <div class="crop-handle handle-tr"></div>
+                                <div class="crop-handle handle-bl"></div>
+                                <div class="crop-handle handle-br"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Controls and Preview -->
+                    <div class="w-full md:w-1/3">
+                        <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                            <h3 class="font-semibold text-gray-700 mb-3">Crop Settings</h3>
+                            
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Aspect Ratio</label>
+                                <select id="aspect-ratio" class="w-full p-2 border border-gray-300 rounded-md">
+                                    <option value="free">Free Form</option>
+                                    <option value="1">Square (1:1)</option>
+                                    <option value="1.777">Landscape (16:9)</option>
+                                    <option value="0.5625">Portrait (9:16)</option>
+                                    <option value="1.5">3:2</option>
+                                    <option value="0.666">2:3</option>
+                                    <option value="1.333">4:3</option>
+                                    <option value="0.75">3:4</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Rotation</label>
+                                <input type="range" id="rotation" min="0" max="360" value="0" class="w-full">
+                                <div class="text-center text-sm text-gray-600"><span id="rotation-value">0°</span></div>
+                            </div>
+
+                            <div class="flex gap-2">
+                                <button id="crop-btn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition">
+                                    Apply Crop
+                                </button>
+                                <button id="reset-btn" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-md transition">
+                                    Reset
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Preview -->
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h3 class="font-semibold text-gray-700 mb-3">Preview</h3>
+                            <div class="bg-white border border-gray-200 rounded-md p-2 flex items-center justify-center h-40">
+                                <canvas id="preview-canvas" class="max-h-32 max-w-full"></canvas>
+                            </div>
+                            <button id="download-btn" class="w-full mt-4 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md transition">
+                                Download Cropped Image
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="text-center text-gray-500 text-sm mt-8">
+            <p>Image Cropper Tool &copy; 2023</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements
+            const uploadInput = document.getElementById('image-upload');
+            const dropZone = document.getElementById('drop-zone');
+            const uploadSection = document.getElementById('upload-section');
+            const cropSection = document.getElementById('crop-section');
+            const cropImage = document.getElementById('crop-image');
+            const cropContainer = document.getElementById('crop-container');
+            const cropArea = document.getElementById('crop-area');
+            const aspectRatioSelect = document.getElementById('aspect-ratio');
+            const rotationSlider = document.getElementById('rotation');
+            const rotationValue = document.getElementById('rotation-value');
+            const cropBtn = document.getElementById('crop-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const previewCanvas = document.getElementById('preview-canvas');
+            const downloadBtn = document.getElementById('download-btn');
+            
+            // Variables
+            let image = null;
+            let cropX = 50;
+            let cropY = 50;
+            let cropWidth = 200;
+            let cropHeight = 200;
+            let isDragging = false;
+            let dragHandle = null;
+            let startX, startY;
+            let startCropX, startCropY, startCropWidth, startCropHeight;
+            let rotation = 0;
+            let aspectRatio = null;
+            
+            // Event Listeners
+            dropZone.addEventListener('click', () => uploadInput.click());
+            dropZone.addEventListener('dragover', handleDragOver);
+            dropZone.addEventListener('drop', handleDrop);
+            uploadInput.addEventListener('change', handleFileSelect);
+            aspectRatioSelect.addEventListener('change', updateAspectRatio);
+            rotationSlider.addEventListener('input', updateRotation);
+            cropBtn.addEventListener('click', applyCrop);
+            resetBtn.addEventListener('click', resetCrop);
+            downloadBtn.addEventListener('click', downloadImage);
+            
+            // Initialize crop area handles
+            const handles = cropArea.querySelectorAll('.crop-handle');
+            handles.forEach(handle => {
+                handle.addEventListener('mousedown', startResize);
+            });
+            
+            cropArea.addEventListener('mousedown', startDrag);
+            document.addEventListener('mousemove', handleDrag);
+            document.addEventListener('mouseup', stopDrag);
+            
+            // Functions
+            function handleDragOver(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.add('border-blue-400');
+            }
+            
+            function handleDrop(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.remove('border-blue-400');
+                
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    handleImageFile(e.dataTransfer.files[0]);
+                }
+            }
+            
+            function handleFileSelect(e) {
+                if (e.target.files && e.target.files[0]) {
+                    handleImageFile(e.target.files[0]);
+                }
+            }
+            
+            function handleImageFile(file) {
+                if (!file.type.match('image.*')) {
+                    alert('Please select an image file.');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    image = new Image();
+                    image.onload = function() {
+                        showCropInterface();
+                        initCropArea();
+                        updatePreview();
+                    };
+                    image.src = e.target.result;
+                    cropImage.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+            
+            function showCropInterface() {
+                uploadSection.classList.add('hidden');
+                cropSection.classList.remove('hidden');
+            }
+            
+            function initCropArea() {
+                // Set initial crop area (centered, 200x200 or based on image size)
+                const containerWidth = cropContainer.offsetWidth;
+                const containerHeight = cropContainer.offsetHeight;
+                
+                cropWidth = Math.min(200, containerWidth - 20);
+                cropHeight = Math.min(200, containerHeight - 20);
+                
+                cropX = (containerWidth - cropWidth) / 2;
+                cropY = (containerHeight - cropHeight) / 2;
+                
+                updateCropArea();
+            }
+            
+            function updateCropArea() {
+                cropArea.style.left = cropX + 'px';
+                cropArea.style.top = cropY + 'px';
+                cropArea.style.width = cropWidth + 'px';
+                cropArea.style.height = cropHeight + 'px';
+            }
+            
+            function startDrag(e) {
+                if (e.target === cropArea) {
+                    isDragging = true;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    startCropX = cropX;
+                    startCropY = cropY;
+                }
+            }
+            
+            function startResize(e) {
+                isDragging = true;
+                dragHandle = e.target.classList[1]; // Get the handle class (e.g., handle-tl)
+                startX = e.clientX;
+                startY = e.clientY;
+                startCropX = cropX;
+                startCropY = cropY;
+                startCropWidth = cropWidth;
+                startCropHeight = cropHeight;
+            }
+            
+            function handleDrag(e) {
+                if (!isDragging) return;
+                
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                
+                if (dragHandle) {
+                    // Resizing based on which handle is dragged
+                    switch(dragHandle) {
+                        case 'handle-tl':
+                            cropX = Math.max(0, startCropX + dx);
+                            cropY = Math.max(0, startCropY + dy);
+                            cropWidth = Math.max(50, startCropWidth - dx);
+                            cropHeight = aspectRatio ? cropWidth / aspectRatio : Math.max(50, startCropHeight - dy);
+                            break;
+                        case 'handle-tr':
+                            cropY = Math.max(0, startCropY + dy);
+                            cropWidth = Math.max(50, startCropWidth + dx);
+                            cropHeight = aspectRatio ? cropWidth / aspectRatio : Math.max(50, startCropHeight - dy);
+                            break;
+                        case 'handle-bl':
+                            cropX = Math.max(0, startCropX + dx);
+                            cropWidth = Math.max(50, startCropWidth - dx);
+                            cropHeight = aspectRatio ? cropWidth / aspectRatio : Math.max(50, startCropHeight + dy);
+                            break;
+                        case 'handle-br':
+                            cropWidth = Math.max(50, startCropWidth + dx);
+                            cropHeight = aspectRatio ? cropWidth / aspectRatio : Math.max(50, startCropHeight + dy);
+                            break;
+                    }
+                    
+                    // Maintain aspect ratio if set
+                    if (aspectRatio) {
+                        cropHeight = cropWidth / aspectRatio;
+                    }
+                } else {
+                    // Moving the crop area
+                    cropX = Math.max(0, Math.min(cropContainer.offsetWidth - cropWidth, startCropX + dx));
+                    cropY = Math.max(0, Math.min(cropContainer.offsetHeight - cropHeight, startCropY + dy));
+                }
+                
+                updateCropArea();
+                updatePreview();
+            }
+            
+            function stopDrag() {
+                isDragging = false;
+                dragHandle = null;
+            }
+            
+            function updateAspectRatio() {
+                const value = aspectRatioSelect.value;
+                aspectRatio = value === 'free' ? null : parseFloat(value);
+                
+                if (aspectRatio) {
+                    cropHeight = cropWidth / aspectRatio;
+                    updateCropArea();
+                    updatePreview();
+                }
+            }
+            
+            function updateRotation() {
+                rotation = parseInt(rotationSlider.value);
+                rotationValue.textContent = rotation + '°';
+                updatePreview();
+            }
+            
+            function applyCrop() {
+                // In a real implementation, this would update the main image
+                // For this demo, we'll just update the preview
+                updatePreview();
+            }
+            
+            function resetCrop() {
+                rotationSlider.value = 0;
+                rotation = 0;
+                rotationValue.textContent = '0°';
+                aspectRatioSelect.value = 'free';
+                aspectRatio = null;
+                initCropArea();
+                updatePreview();
+            }
+            
+            function updatePreview() {
+                if (!image) return;
+                
+                const ctx = previewCanvas.getContext('2d');
+                
+                // Set canvas size to match crop area (with max dimensions for preview)
+                const scale = Math.min(1, 150 / cropWidth, 150 / cropHeight);
+                previewCanvas.width = cropWidth * scale;
+                previewCanvas.height = cropHeight * scale;
+                
+                // Clear canvas
+                ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+                
+                // Draw cropped and rotated image
+                ctx.save();
+                ctx.translate(previewCanvas.width / 2, previewCanvas.height / 2);
+                ctx.rotate(rotation * Math.PI / 180);
+                
+                // Calculate scaling to fit the crop area into the preview
+                ctx.drawImage(
+                    image,
+                    cropX, cropY, cropWidth, cropHeight,  // source rectangle (crop area)
+                    -previewCanvas.width / 2, -previewCanvas.height / 2, previewCanvas.width, previewCanvas.height // destination
+                );
+                
+                ctx.restore();
+            }
+            
+            function downloadImage() {
+                if (!image) return;
+                
+                // Create a temporary canvas for the full resolution crop
+                const canvas = document.createElement('canvas');
+                canvas.width = cropWidth;
+                canvas.height = cropHeight;
+                const ctx = canvas.getContext('2d');
+                
+                // Draw the cropped and rotated image
+                ctx.save();
+                ctx.translate(canvas.width / 2, canvas.height / 2);
+                ctx.rotate(rotation * Math.PI / 180);
+                
+                // For rotation, we might need to adjust the drawing position
+                // This is a simplified version - a complete solution would handle all edge cases
+                ctx.drawImage(
+                    image,
+                    cropX, cropY, cropWidth, cropHeight,
+                    -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height
+                );
+                
+                ctx.restore();
+                
+                // Create download link
+                const link = document.createElement('a');
+                link.download = 'cropped-image.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }
+        });
+    </script>
+</body>
+</html>

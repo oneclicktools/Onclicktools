@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image to Text OCR</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .drop-zone {
+            transition: all 0.3s ease;
+        }
+        .drop-zone.drag-over {
+            background-color: #e0e7ff;
+            transform: scale(1.02);
+        }
+        .progress-bar {
+            transition: width 0.3s ease;
+        }
+        #imagePreview {
+            transition: all 0.3s ease;
+            max-height: 300px;
+        }
+        #extractedText {
+            min-height: 150px;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Header -->
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-indigo-700 mb-3">Image to Text OCR</h1>
+            <p class="text-gray-600 text-lg">Extract text from your images quickly and easily</p>
+        </header>
+
+        <main class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <!-- Upload Section -->
+            <div class="p-6 border-b border-gray-100">
+                <div 
+                    id="dropZone" 
+                    class="drop-zone border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer transition-all duration-300 hover:border-indigo-400 hover:bg-indigo-50"
+                >
+                    <input type="file" id="fileInput" class="hidden" accept="image/*">
+                    <div class="flex flex-col items-center justify-center space-y-4">
+                        <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-cloud-upload-alt text-3xl text-indigo-500"></i>
+                        </div>
+                        <div>
+                            <p class="text-lg font-medium text-gray-700">Drag & drop your image here</p>
+                            <p class="text-gray-500">or</p>
+                        </div>
+                        <label for="fileInput" class="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium cursor-pointer hover:bg-indigo-700 transition-colors">
+                            Browse Files
+                        </label>
+                        <p class="text-sm text-gray-500 mt-2">Supports JPG, PNG, BMP, and TIFF formats</p>
+                    </div>
+                </div>
+
+                <!-- Image Preview -->
+                <div id="imagePreviewContainer" class="mt-6 hidden">
+                    <h3 class="text-lg font-medium text-gray-800 mb-3">Image Preview</h3>
+                    <div class="flex justify-center">
+                        <img id="imagePreview" class="max-h-80 rounded-lg shadow-md" src="" alt="Preview">
+                    </div>
+                    <div class="flex justify-center mt-4 space-x-3">
+                        <button id="rotateLeft" class="p-2 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors">
+                            <i class="fas fa-undo text-gray-700"></i>
+                        </button>
+                        <button id="rotateRight" class="p-2 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors">
+                            <i class="fas fa-redo text-gray-700"></i>
+                        </button>
+                        <button id="removeImage" class="p-2 bg-red-100 rounded-full hover:bg-red-200 transition-colors">
+                            <i class="fas fa-times text-red-600"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div id="progressContainer" class="px-6 pb-6 hidden">
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div id="progressBar" class="progress-bar bg-indigo-600 h-2.5 rounded-full" style="width: 0%"></div>
+                </div>
+                <div class="flex justify-between items-center mt-2">
+                    <span id="progressText" class="text-sm font-medium text-indigo-600">Processing...</span>
+                    <span id="progressPercent" class="text-sm font-medium text-gray-600">0%</span>
+                </div>
+                <div id="statusText" class="text-sm text-gray-500 mt-1">Initializing...</div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="p-6 border-b border-gray-100 flex flex-wrap gap-3">
+                <button 
+                    id="extractBtn" 
+                    class="flex items-center justify-center px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-1 min-w-[200px]"
+                    disabled
+                >
+                    <i class="fas fa-qrcode mr-2"></i> Extract Text
+                </button>
+                <button 
+                    id="copyBtn" 
+                    class="flex items-center justify-center px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-1 min-w-[200px]"
+                    disabled
+                >
+                    <i class="fas fa-copy mr-2"></i> Copy Text
+                </button>
+                <button 
+                    id="downloadBtn" 
+                    class="flex items-center justify-center px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-1 min-w-[200px]"
+                    disabled
+                >
+                    <i class="fas fa-download mr-2"></i> Download Text
+                </button>
+            </div>
+
+            <!-- Result Section -->
+            <div class="p-6">
+                <h3 class="text-lg font-medium text-gray-800 mb-3">Extracted Text</h3>
+                <div class="relative">
+                    <textarea 
+                        id="extractedText" 
+                        class="w-full h-64 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50" 
+                        placeholder="Your extracted text will appear here..."
+                        readonly
+                    ></textarea>
+                    <div id="textPlaceholder" class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div class="text-center text-gray-500 p-4">
+                            <i class="fas fa-font text-4xl mb-3 opacity-50"></i>
+                            <p>No text extracted yet. Upload an image and click "Extract Text"</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Features Section -->
+        <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                <div class="w-14 h-14 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-upload text-2xl text-indigo-600"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">Easy Upload</h3>
+                <p class="text-gray-600">Drag & drop or browse to upload your images quickly</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                <div class="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-bolt text-2xl text-green-600"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">Fast Processing</h3>
+                <p class="text-gray-600">Uses Tesseract.js for quick and accurate text extraction</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                <div class="w-14 h-14 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-mobile-alt text-2xl text-purple-600"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">Fully Responsive</h3>
+                <p class="text-gray-600">Works perfectly on desktop, tablet, and mobile devices</p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-12 text-center text-gray-500 text-sm">
+            <p>Powered by Tesseract.js • No images are uploaded to any server</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements
+            const fileInput = document.getElementById('fileInput');
+            const dropZone = document.getElementById('dropZone');
+            const imagePreview = document.getElementById('imagePreview');
+            const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+            const extractBtn = document.getElementById('extractBtn');
+            const copyBtn = document.getElementById('copyBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const extractedText = document.getElementById('extractedText');
+            const textPlaceholder = document.getElementById('textPlaceholder');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const progressPercent = document.getElementById('progressPercent');
+            const statusText = document.getElementById('statusText');
+            const rotateLeft = document.getElementById('rotateLeft');
+            const rotateRight = document.getElementById('rotateRight');
+            const removeImage = document.getElementById('removeImage');
+            
+            let currentImage = null;
+            let rotation = 0;
+            
+            // Drag and drop handlers
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                dropZone.classList.add('drag-over');
+            }
+            
+            function unhighlight() {
+                dropZone.classList.remove('drag-over');
+            }
+            
+            dropZone.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleFiles(files);
+            }
+            
+            fileInput.addEventListener('change', function() {
+                handleFiles(this.files);
+            });
+            
+            function handleFiles(files) {
+                if (files.length > 0) {
+                    const file = files[0];
+                    if (file.type.match('image.*')) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            currentImage = e.target.result;
+                            imagePreview.src = currentImage;
+                            imagePreviewContainer.classList.remove('hidden');
+                            extractBtn.disabled = false;
+                            rotation = 0;
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                }
+            }
+            
+            // Rotate and remove image
+            rotateLeft.addEventListener('click', function() {
+                rotation = (rotation - 90) % 360;
+                applyRotation();
+            });
+            
+            rotateRight.addEventListener('click', function() {
+                rotation = (rotation + 90) % 360;
+                applyRotation();
+            });
+            
+            function applyRotation() {
+                imagePreview.style.transform = `rotate(${rotation}deg)`;
+            }
+            
+            removeImage.addEventListener('click', function() {
+                currentImage = null;
+                imagePreviewContainer.classList.add('hidden');
+                extractBtn.disabled = true;
+                copyBtn.disabled = true;
+                downloadBtn.disabled = true;
+                extractedText.value = '';
+                textPlaceholder.classList.remove('hidden');
+                fileInput.value = '';
+            });
+            
+            // Extract text from image
+            extractBtn.addEventListener('click', function() {
+                if (!currentImage) return;
+                
+                // Reset UI
+                extractedText.value = '';
+                textPlaceholder.classList.add('hidden');
+                copyBtn.disabled = true;
+                downloadBtn.disabled = true;
+                progressContainer.classList.remove('hidden');
+                progressBar.style.width = '0%';
+                progressPercent.textContent = '0%';
+                statusText.textContent = 'Initializing...';
+                extractBtn.disabled = true;
+                
+                // Perform OCR
+                Tesseract.recognize(
+                    currentImage,
+                    'eng',
+                    { 
+                        logger: message => updateProgress(message)
+                    }
+                ).then(result => {
+                    const text = result.data.text;
+                    extractedText.value = text;
+                    copyBtn.disabled = false;
+                    downloadBtn.disabled = false;
+                    extractBtn.disabled = false;
+                    
+                    // Final update
+                    progressBar.style.width = '100%';
+                    progressPercent.textContent = '100%';
+                    statusText.textContent = 'Extraction completed!';
+                    
+                    // Hide progress after a delay
+                    setTimeout(() => {
+                        progressContainer.classList.add('hidden');
+                    }, 3000);
+                }).catch(err => {
+                    console.error(err);
+                    statusText.textContent = 'Error: ' + err.message;
+                    extractBtn.disabled = false;
+                });
+            });
+            
+            function updateProgress(message) {
+                if (message.status === 'recognizing text') {
+                    const progress = Math.round(message.progress * 100);
+                    progressBar.style.width = `${progress}%`;
+                    progressPercent.textContent = `${progress}%`;
+                    
+                    if (progress < 30) {
+                        statusText.textContent = 'Processing image...';
+                    } else if (progress < 80) {
+                        statusText.textContent = 'Recognizing text...';
+                    } else {
+                        statusText.textContent = 'Finalizing...';
+                    }
+                }
+            }
+            
+            // Copy text to clipboard
+            copyBtn.addEventListener('click', function() {
+                extractedText.select();
+                document.execCommand('copy');
+                
+                // Visual feedback
+                const originalText = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Copied!';
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalText;
+                }, 2000);
+            });
+            
+            // Download text
+            downloadBtn.addEventListener('click', function() {
+                const text = extractedText.value;
+                const blob = new Blob([text], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'extracted-text.txt';
+                document.body.appendChild(a);
+                a.click();
+                
+                // Clean up
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 100);
+            });
+        });
+    </script>
+</body>
+</html>

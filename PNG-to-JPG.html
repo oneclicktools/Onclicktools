@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PNG to JPG Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .drop-zone {
+            border: 2px dashed #cbd5e1;
+            transition: all 0.3s ease;
+        }
+        .drop-zone.drag-over {
+            border-color: #3b82f6;
+            background-color: #f0f7ff;
+        }
+        #previewContainer {
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-4xl w-full bg-white rounded-xl shadow-xl overflow-hidden">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6 text-center">
+            <h1 class="text-3xl font-bold mb-2"><i class="fas fa-exchange-alt mr-3"></i>PNG to JPG Converter</h1>
+            <p class="opacity-90">Upload your PNG images and convert them to JPG format instantly</p>
+        </div>
+        
+        <div class="p-6 md:p-8">
+            <!-- Upload Section -->
+            <div class="mb-8">
+                <div id="dropZone" class="drop-zone rounded-lg p-8 text-center cursor-pointer mb-4">
+                    <input type="file" id="fileInput" class="hidden" accept="image/png">
+                    <div class="mx-auto w-16 h-16 mb-4">
+                        <i class="fas fa-cloud-upload-alt text-blue-500 text-5xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-700 mb-2">Drag & Drop your PNG image</h3>
+                    <p class="text-gray-500 mb-4">or</p>
+                    <label for="fileInput" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg cursor-pointer inline-block transition duration-300">
+                        <i class="fas fa-search mr-2"></i>Browse Files
+                    </label>
+                    <p class="text-gray-500 text-sm mt-4">Supports: PNG images only</p>
+                </div>
+                <div id="fileInfo" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+                    <div class="flex items-center">
+                        <div class="bg-blue-100 p-3 rounded-lg mr-4">
+                            <i class="fas fa-file-image text-blue-600 text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-medium text-gray-800" id="fileName">filename.png</h4>
+                            <p class="text-sm text-gray-600" id="fileSize">0 KB</p>
+                        </div>
+                        <button id="removeFile" class="text-red-500 hover:text-red-700">
+                            <i class="fas fa-times-circle text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Preview Section -->
+            <div id="previewContainer" class="hidden mb-8">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-image mr-2 text-blue-500"></i>Preview
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="border rounded-lg overflow-hidden shadow-sm">
+                        <div class="bg-gray-100 py-2 px-4 border-b text-center font-medium text-gray-700">Original PNG</div>
+                        <div class="p-4">
+                            <img id="previewOriginal" class="max-h-64 mx-auto" src="" alt="Original PNG">
+                        </div>
+                    </div>
+                    <div class="border rounded-lg overflow-hidden shadow-sm">
+                        <div class="bg-gray-100 py-2 px-4 border-b text-center font-medium text-gray-700">Converted JPG</div>
+                        <div class="p-4">
+                            <img id="previewConverted" class="max-h-64 mx-auto" src="" alt="Converted JPG">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Conversion Options -->
+            <div id="optionsContainer" class="hidden mb-8">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-cog mr-2 text-blue-500"></i>Conversion Options
+                </h2>
+                <div class="bg-gray-50 p-5 rounded-lg border border-gray-200">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 font-medium mb-2">Image Quality</label>
+                        <div class="flex items-center">
+                            <input type="range" id="qualitySlider" min="50" max="100" value="90" class="w-full h-2 bg-blue-100 rounded-lg appearance-none cursor-pointer">
+                            <span id="qualityValue" class="ml-4 text-blue-600 font-medium w-12">90%</span>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 font-medium mb-2">Background Color (for transparency)</label>
+                        <div class="flex space-x-3">
+                            <div class="relative">
+                                <input type="radio" name="bgColor" id="whiteBg" value="white" class="hidden peer" checked>
+                                <label for="whiteBg" class="inline-flex items-center justify-center w-12 h-12 border-2 border-gray-300 rounded-lg cursor-pointer peer-checked:border-blue-500 bg-white">
+                                    <span class="text-gray-700 font-medium">White</span>
+                                </label>
+                            </div>
+                            <div class="relative">
+                                <input type="radio" name="bgColor" id="blackBg" value="black" class="hidden peer">
+                                <label for="blackBg" class="inline-flex items-center justify-center w-12 h-12 border-2 border-gray-300 rounded-lg cursor-pointer peer-checked:border-blue-500 bg-black">
+                                    <span class="text-white font-medium">Black</span>
+                                </label>
+                            </div>
+                            <div class="relative">
+                                <input type="radio" name="bgColor" id="transparentBg" value="transparent" class="hidden peer">
+                                <label for="transparentBg" class="inline-flex items-center justify-center w-12 h-12 border-2 border-gray-300 rounded-lg cursor-pointer peer-checked:border-blue-500 bg-gray-200">
+                                    <span class="text-gray-700 font-medium">Transparent</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4">
+                <button id="convertBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition duration-300 flex items-center justify-center">
+                    <i class="fas fa-sync-alt mr-2"></i>Convert to JPG
+                </button>
+                <a id="downloadBtn" class="flex-1 hidden bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition duration-300 flex items-center justify-center">
+                    <i class="fas fa-download mr-2"></i>Download JPG
+                </a>
+            </div>
+        </div>
+        
+        <!-- Info Section -->
+        <div class="bg-gray-50 border-t p-6">
+            <div class="max-w-3xl mx-auto">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                    <i class="fas fa-info-circle mr-2 text-blue-500"></i>About PNG to JPG Conversion
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                    <div class="p-3 bg-white rounded-lg border border-gray-200">
+                        <h4 class="font-medium text-gray-700 mb-1"><i class="fas fa-lightbulb mr-2 text-yellow-500"></i>Why convert?</h4>
+                        <p>JPG files are often smaller and more web-friendly than PNGs.</p>
+                    </div>
+                    <div class="p-3 bg-white rounded-lg border border-gray-200">
+                        <h4 class="font-medium text-gray-700 mb-1"><i class="fas fa-exclamation-triangle mr-2 text-orange-500"></i>Note</h4>
+                        <p>JPG doesn't support transparency. Transparent areas will use the selected background color.</p>
+                    </div>
+                    <div class="p-3 bg-white rounded-lg border border-gray-200">
+                        <h4 class="font-medium text-gray-700 mb-1"><i class="fas fa-lock mr-2 text-green-500"></i>Privacy</h4>
+                        <p>Your images are processed entirely in your browser and never uploaded to any server.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements
+            const fileInput = document.getElementById('fileInput');
+            const dropZone = document.getElementById('dropZone');
+            const fileInfo = document.getElementById('fileInfo');
+            const fileName = document.getElementById('fileName');
+            const fileSize = document.getElementById('fileSize');
+            const removeFile = document.getElementById('removeFile');
+            const previewContainer = document.getElementById('previewContainer');
+            const previewOriginal = document.getElementById('previewOriginal');
+            const previewConverted = document.getElementById('previewConverted');
+            const optionsContainer = document.getElementById('optionsContainer');
+            const convertBtn = document.getElementById('convertBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const qualitySlider = document.getElementById('qualitySlider');
+            const qualityValue = document.getElementById('qualityValue');
+            
+            let currentFile = null;
+            
+            // Update quality value display
+            qualitySlider.addEventListener('input', () => {
+                qualityValue.textContent = `${qualitySlider.value}%`;
+            });
+            
+            // Drag and drop functionality
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                dropZone.classList.add('drag-over');
+            }
+            
+            function unhighlight() {
+                dropZone.classList.remove('drag-over');
+            }
+            
+            dropZone.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                
+                if (files.length) {
+                    handleFiles(files);
+                }
+            }
+            
+            // File input change handler
+            fileInput.addEventListener('change', function() {
+                if (this.files.length) {
+                    handleFiles(this.files);
+                }
+            });
+            
+            // Remove file handler
+            removeFile.addEventListener('click', function() {
+                resetUI();
+            });
+            
+            // Handle uploaded files
+            function handleFiles(files) {
+                const file = files[0];
+                
+                // Check if file is PNG
+                if (!file.type.match('image/png')) {
+                    alert('Please upload a PNG image');
+                    return;
+                }
+                
+                currentFile = file;
+                
+                // Update file info
+                fileName.textContent = file.name;
+                fileSize.textContent = formatFileSize(file.size);
+                fileInfo.classList.remove('hidden');
+                
+                // Preview image
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewOriginal.src = e.target.result;
+                    previewContainer.classList.remove('hidden');
+                    optionsContainer.classList.remove('hidden');
+                    
+                    // Pre-convert for preview
+                    convertImage('white');
+                };
+                reader.readAsDataURL(file);
+            }
+            
+            // Convert button handler
+            convertBtn.addEventListener('click', function() {
+                if (!currentFile) return;
+                
+                const selectedBg = document.querySelector('input[name="bgColor"]:checked').value;
+                convertImage(selectedBg);
+                
+                // Show download button
+                downloadBtn.classList.remove('hidden');
+            });
+            
+            // Convert image function
+            function convertImage(bgColor) {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                
+                img.onload = function() {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    
+                    // Fill with background color
+                    if (bgColor === 'white') {
+                        ctx.fillStyle = '#FFFFFF';
+                    } else if (bgColor === 'black') {
+                        ctx.fillStyle = '#000000';
+                    } else {
+                        ctx.fillStyle = 'rgba(0,0,0,0)'; // Transparent
+                    }
+                    
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Draw the image
+                    ctx.drawImage(img, 0, 0);
+                    
+                    // Get JPG data URL
+                    const quality = qualitySlider.value / 100;
+                    const dataURL = canvas.toDataURL('image/jpeg', quality);
+                    
+                    // Update preview
+                    previewConverted.src = dataURL;
+                    
+                    // Set download link
+                    downloadBtn.href = dataURL;
+                    downloadBtn.download = currentFile.name.replace('.png', '.jpg');
+                };
+                
+                img.src = URL.createObjectURL(currentFile);
+            }
+            
+            // Format file size
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+            
+            // Reset UI
+            function resetUI() {
+                currentFile = null;
+                fileInput.value = '';
+                fileInfo.classList.add('hidden');
+                previewContainer.classList.add('hidden');
+                optionsContainer.classList.add('hidden');
+                downloadBtn.classList.add('hidden');
+            }
+            
+            // Background color selection
+            document.querySelectorAll('input[name="bgColor"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (currentFile) {
+                        convertImage(this.value);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

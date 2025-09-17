@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thumbnail Downloader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🖼️</text></svg>">
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-white shadow-sm py-4">
+        <div class="container mx-auto px-4 flex items-center justify-between">
+            <h1 class="text-2xl font-bold text-indigo-600 flex items-center">
+                <i class="fas fa-image mr-2"></i>Thumbnail Downloader
+            </h1>
+            <div class="flex items-center space-x-4">
+                <a href="#" class="text-gray-600 hover:text-indigo-600">
+                    <i class="fab fa-github text-xl"></i>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <!-- Hero Section -->
+            <section class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-gray-800 mb-4">Download High-Quality Thumbnails</h2>
+                <p class="text-gray-600 text-lg mb-8">Extract thumbnails from YouTube videos in multiple resolutions with a single click.</p>
+                
+                <!-- URL Input Section -->
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                    <div class="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4">
+                        <input type="text" id="videoUrl" placeholder="Paste YouTube video URL here" 
+                               class="flex-grow w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                        <button id="extractBtn" class="w-full md:w-auto px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center">
+                            <i class="fas fa-bolt mr-2"></i> Extract Thumbnails
+                        </button>
+                    </div>
+                    <p class="text-sm text-gray-500 mt-4 text-left">Example: https://www.youtube.com/watch?v=dQw4w9WgXcQ</p>
+                </div>
+            </section>
+
+            <!-- Results Section (Initially Hidden) -->
+            <section id="resultsSection" class="hidden bg-white rounded-xl shadow-lg p-6 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-2xl font-semibold text-gray-800">Available Thumbnails</h3>
+                    <button id="selectAllBtn" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                        Select All
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <!-- Thumbnail Cards will be inserted here -->
+                </div>
+
+                <div class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+                    <div class="text-sm text-gray-600">
+                        <i class="fas fa-info-circle mr-2"></i>Right-click on any image and select "Save image as..." to download
+                    </div>
+                    <button id="downloadAllBtn" class="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors flex items-center">
+                        <i class="fas fa-download mr-2"></i> Download Selected
+                    </button>
+                </div>
+            </section>
+
+            <!-- How to Use Section -->
+            <section class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-2xl font-semibold text-gray-800 mb-4">How to Use</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="text-indigo-600 text-2xl">1</span>
+                        </div>
+                        <h4 class="font-semibold text-gray-800 mb-2">Copy YouTube URL</h4>
+                        <p class="text-gray-600">Copy the URL of the YouTube video from your browser's address bar</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="text-indigo-600 text-2xl">2</span>
+                        </div>
+                        <h4 class="font-semibold text-gray-800 mb-2">Paste & Extract</h4>
+                        <p class="text-gray-600">Paste the URL in the input field and click the Extract button</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="text-indigo-600 text-2xl">3</span>
+                        </div>
+                        <h4 class="font-semibold text-gray-800 mb-2">Download</h4>
+                        <p class="text-gray-600">Choose your preferred resolution and download the thumbnail</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white py-6 mt-12">
+        <div class="container mx-auto px-4 text-center text-gray-600">
+            <p>© 2023 Thumbnail Downloader. A simple tool for content creators.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const extractBtn = document.getElementById('extractBtn');
+            const videoUrlInput = document.getElementById('videoUrl');
+            const resultsSection = document.getElementById('resultsSection');
+            const selectAllBtn = document.getElementById('selectAllBtn');
+            const downloadAllBtn = document.getElementById('downloadAllBtn');
+            
+            // Sample thumbnail data structure
+            const thumbnailResolutions = [
+                { id: 'maxres', label: 'Maximum Resolution', width: 1280, height: 720 },
+                { id: 'sd', label: 'Standard Definition', width: 640, height: 480 },
+                { id: 'hq', label: 'High Quality', width: 480, height: 360 },
+                { id: 'mq', label: 'Medium Quality', width: 320, height: 180 }
+            ];
+            
+            // Function to extract video ID from YouTube URL
+            function extractVideoId(url) {
+                const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+                const match = url.match(regExp);
+                return (match && match[7].length === 11) ? match[7] : false;
+            }
+            
+            // Function to generate thumbnail URLs
+            function generateThumbnailUrls(videoId) {
+                return {
+                    maxres: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+                    sd: `https://img.youtube.com/vi/${videoId}/sddefault.jpg`,
+                    hq: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+                    mq: `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`
+                };
+            }
+            
+            // Function to create thumbnail card
+            function createThumbnailCard(resolution, url, width, height) {
+                return `
+                    <div class="bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
+                        <div class="p-4 border-b border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <h4 class="font-semibold text-gray-800">${resolution}</h4>
+                                <span class="text-sm text-gray-500">${width}×${height}</span>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <div class="aspect-w-16 aspect-h-9 bg-gray-200 rounded overflow-hidden mb-4">
+                                <img src="${url}" alt="${resolution} thumbnail" class="w-full h-auto object-cover" onerror="this.style.display='none'">
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <a href="${url}" download="${resolution}_thumbnail.jpg" class="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded hover:bg-indigo-700 transition-colors">
+                                    Download
+                                </a>
+                                <button class="text-gray-500 hover:text-indigo-600">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Event listener for extract button
+            extractBtn.addEventListener('click', function() {
+                const videoUrl = videoUrlInput.value.trim();
+                
+                if (!videoUrl) {
+                    alert('Please enter a YouTube video URL');
+                    return;
+                }
+                
+                const videoId = extractVideoId(videoUrl);
+                
+                if (!videoId) {
+                    alert('Please enter a valid YouTube video URL');
+                    return;
+                }
+                
+                // Generate thumbnail URLs
+                const thumbnails = generateThumbnailUrls(videoId);
+                
+                // Clear previous results
+                const thumbnailGrid = resultsSection.querySelector('.grid');
+                thumbnailGrid.innerHTML = '';
+                
+                // Add new thumbnail cards
+                thumbnailResolutions.forEach(res => {
+                    const cardHtml = createThumbnailCard(
+                        res.label, 
+                        thumbnails[res.id], 
+                        res.width, 
+                        res.height
+                    );
+                    thumbnailGrid.innerHTML += cardHtml;
+                });
+                
+                // Show results section
+                resultsSection.classList.remove('hidden');
+                
+                // Scroll to results
+                resultsSection.scrollIntoView({ behavior: 'smooth' });
+            });
+            
+            // Event listener for select all button
+            selectAllBtn.addEventListener('click', function() {
+                const downloadLinks = document.querySelectorAll('a[download]');
+                
+                // This would typically trigger a multiple file download
+                // In a real implementation, you might use a zip library
+                alert('In a real implementation, this would download all selected thumbnails as a ZIP file.');
+            });
+            
+            // Event listener for download all button
+            downloadAllBtn.addEventListener('click', function() {
+                const checkedBoxes = document.querySelectorAll('input[type="checkbox"]:checked');
+                
+                if (checkedBoxes.length === 0) {
+                    alert('Please select at least one thumbnail to download');
+                    return;
+                }
+                
+                // This would typically trigger a multiple file download
+                alert(`In a real implementation, this would download ${checkedBoxes.length} thumbnails.`);
+            });
+            
+            // Add placeholder video URLs on click for easier testing
+            videoUrlInput.addEventListener('click', function() {
+                if (!this.value) {
+                    this.value = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
